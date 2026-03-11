@@ -12,19 +12,96 @@ const STORAGE_KEYS = {
   appSettings: 'gm_app_settings',
 };
 
-// --- Sample Data ---
+// --- Provider & Client Data ---
 const SAMPLE_PROVIDERS: Provider[] = [
-  { id: 'p1', name: 'Sarah Johnson', email: 'sarah.johnson@gracemountainagency.com' },
-  { id: 'p2', name: 'Mike Williams', email: 'mike.williams@gracemountainagency.com' },
-  { id: 'p3', name: 'Jessica Davis', email: 'jessica.davis@gracemountainagency.com' },
+  { id: 'p1', name: 'Teketel Atamo', email: 'teketel.atamo@gracemountainagency.com' },
+  { id: 'p2', name: 'Will Barnette', email: 'will.barnette@gracemountainagency.com' },
+  { id: 'p3', name: 'Jess Barnette', email: 'jess.barnette@gracemountainagency.com' },
+  { id: 'p4', name: 'Cherinet Daba', email: 'cherinet.daba@gracemountainagency.com' },
+  { id: 'p5', name: 'Tena Demeke', email: 'tena.demeke@gracemountainagency.com' },
+  { id: 'p6', name: 'Tabby Etanee', email: 'tabby.etanee@gracemountainagency.com' },
+  { id: 'p7', name: 'Nancy Faltermeier', email: 'nancy.faltermeier@gracemountainagency.com' },
+  { id: 'p8', name: 'Abeselom Gamo', email: 'abeselom.gamo@gracemountainagency.com' },
+  { id: 'p9', name: 'Sunny Gebrgiabher', email: 'sunny.gebrgiabher@gracemountainagency.com' },
+  { id: 'p10', name: 'Ash Gelaw', email: 'ash.gelaw@gracemountainagency.com' },
+  { id: 'p11', name: 'David George', email: 'david.george@gracemountainagency.com' },
+  { id: 'p12', name: 'Kim Larson', email: 'kim.larson@gracemountainagency.com' },
+  { id: 'p13', name: 'Daniel Lefe', email: 'daniel.lefe@gracemountainagency.com' },
+  { id: 'p14', name: 'Ramey Lengkong', email: 'ramey.lengkong@gracemountainagency.com' },
+  { id: 'p15', name: 'Maya Lim', email: 'maya.lim@gracemountainagency.com' },
+  { id: 'p16', name: 'Grace Lumowa', email: 'grace.lumowa@gracemountainagency.com' },
+  { id: 'p17', name: 'Jonas Mancho', email: 'jonas.mancho@gracemountainagency.com' },
+  { id: 'p18', name: 'Meidy Rangingisan', email: 'meidy.rangingisan@gracemountainagency.com' },
+  { id: 'p19', name: 'Abby Tesfaye', email: 'abby.tesfaye@gracemountainagency.com' },
+  { id: 'p20', name: 'Grace Torres', email: 'grace.torres@gracemountainagency.com' },
+  { id: 'p21', name: 'Pam Trent', email: 'pam.trent@gracemountainagency.com' },
+  { id: 'p22', name: 'Yidnekachew Emebet Jambo (Emma) Tsegaye', email: 'emma.tsegaye@gracemountainagency.com' },
+  { id: 'p23', name: 'Mimi Yalew', email: 'mimi.yalew@gracemountainagency.com' },
+  { id: 'p24', name: 'Yejulanche Yalew', email: 'yejulanche.yalew@gracemountainagency.com' },
+  { id: 'p25', name: 'Elias Yerdaw', email: 'elias.yerdaw@gracemountainagency.com' },
+  { id: 'p26', name: 'Meron Zegeye', email: 'meron.zegeye@gracemountainagency.com' },
 ];
 
 const SAMPLE_CLIENTS: Client[] = [
-  { id: 'c1', name: 'James Carter', providerId: 'p1' },
-  { id: 'c2', name: 'Emily Rodriguez', providerId: 'p1' },
-  { id: 'c3', name: 'David Kim', providerId: 'p2' },
-  { id: 'c4', name: 'Maria Lopez', providerId: 'p2' },
-  { id: 'c5', name: 'Thomas Brown', providerId: 'p3' },
+  // Teketel Atamo
+  { id: 'c1', name: 'Jenesa Claycomb', providerId: 'p1' },
+  // Will Barnette
+  { id: 'c2', name: 'Hazel Addams', providerId: 'p2' },
+  // Jess Barnette
+  { id: 'c3', name: 'Hazel Addams', providerId: 'p3' },
+  // Cherinet Daba
+  { id: 'c4', name: 'Charlie Comstock', providerId: 'p4' },
+  { id: 'c5', name: 'Jacob Whitson', providerId: 'p4' },
+  // Tena Demeke
+  { id: 'c6', name: 'Mary Katherine Winter', providerId: 'p5' },
+  // Tabby Etanee
+  { id: 'c7', name: 'Sergio Alexandro Gonzalez', providerId: 'p6' },
+  { id: 'c8', name: 'Jennifer Boyer', providerId: 'p6' },
+  // Nancy Faltermeier
+  { id: 'c9', name: 'Shawna Faltermeier', providerId: 'p7' },
+  // Abeselom Gamo
+  { id: 'c10', name: 'Jawon Hudson', providerId: 'p8' },
+  // Sunny Gebrgiabher
+  { id: 'c11', name: 'Derek Powers', providerId: 'p9' },
+  // Ash Gelaw
+  { id: 'c12', name: 'Jonathan Kopec', providerId: 'p10' },
+  { id: 'c13', name: 'Gryffyn Raven', providerId: 'p10' },
+  { id: 'c14', name: 'Nathaniel Weldon', providerId: 'p10' },
+  // David George
+  { id: 'c15', name: 'Josiah Lee', providerId: 'p11' },
+  // Kim Larson
+  { id: 'c16', name: 'Silas Larson', providerId: 'p12' },
+  // Daniel Lefe
+  { id: 'c17', name: 'Dennis Sisson', providerId: 'p13' },
+  // Ramey Lengkong
+  { id: 'c18', name: 'Sonya Espinoza', providerId: 'p14' },
+  // Maya Lim
+  { id: 'c19', name: 'Elijah Smith', providerId: 'p15' },
+  // Grace Lumowa
+  { id: 'c20', name: 'Renee Valdez', providerId: 'p16' },
+  // Jonas Mancho
+  { id: 'c21', name: 'Jonathan Kopec', providerId: 'p17' },
+  // Meidy Rangingisan
+  { id: 'c22', name: 'Joshua Quammen', providerId: 'p18' },
+  // Abby Tesfaye
+  { id: 'c23', name: 'William Blevins', providerId: 'p19' },
+  { id: 'c24', name: 'Derek Powers', providerId: 'p19' },
+  { id: 'c25', name: 'Jessi De Jesus Cruz', providerId: 'p19' },
+  // Grace Torres
+  { id: 'c26', name: 'Chance Gordon', providerId: 'p20' },
+  { id: 'c27', name: 'Aaron Saldana-Spiegle', providerId: 'p20' },
+  // Pam Trent
+  { id: 'c28', name: 'Sherry Ivaska', providerId: 'p21' },
+  // Yidnekachew Emebet Jambo (Emma) Tsegaye
+  { id: 'c29', name: 'Travis Colman', providerId: 'p22' },
+  // Mimi Yalew
+  { id: 'c30', name: 'Travis Howell', providerId: 'p23' },
+  // Yejulanche Yalew
+  { id: 'c31', name: 'Travis Howell', providerId: 'p24' },
+  // Elias Yerdaw
+  { id: 'c32', name: 'Robert Cope', providerId: 'p25' },
+  // Meron Zegeye
+  { id: 'c33', name: 'Theodore Atkinson', providerId: 'p26' },
 ];
 
 const SAMPLE_ADMINS: AdminUser[] = [
