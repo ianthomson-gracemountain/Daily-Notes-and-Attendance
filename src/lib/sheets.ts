@@ -3,10 +3,11 @@ import { maskClientNameStr } from './phi';
 import { getAllClients } from './store';
 
 const SHEET_URL_KEY = 'gm_google_sheet_url';
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwUSQx00lIxPxSsu1i0GdYLKJeeEofAD9xrc4yndDd3dTIJ9SRg5d-I9y2Tm2U3EJy2/exec';
 
 export function getSheetUrl(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(SHEET_URL_KEY);
+  return localStorage.getItem(SHEET_URL_KEY) || DEFAULT_SHEET_URL;
 }
 
 export function setSheetUrl(url: string): void {
