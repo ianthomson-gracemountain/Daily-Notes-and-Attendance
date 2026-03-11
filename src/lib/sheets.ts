@@ -1,4 +1,5 @@
 import { DailyNote } from './types';
+import { maskClientNameStr } from './phi';
 
 const SHEET_URL_KEY = 'gm_google_sheet_url';
 
@@ -17,37 +18,58 @@ export function clearSheetUrl(): void {
   localStorage.removeItem(SHEET_URL_KEY);
 }
 
-export async function syncNoteToSheet(note: DailyNote): Promise<{ success: boolean; error?: string }> {
+interface SyncOptions {
+  maskClientName?: boolean;
+}
+
+function preparePayload(note: DailyNote, options?: SyncOptions): Record<string, unknown> {
+  const payload: Record<string, unknown> = { ...note };
+  if (options?.maskClientName) {
+    payload.clientName = maskClientNameStr(note.clientName, note.clientId);
+  }
+  // Ensure AI fields are included (even if undefined)
+  payload.aiEnhanced = note.aiEnhanced || false;
+  payload.originalNotes = note.originalNotes || '';
+  return payload;
+}
+
+export async function syncNoteToSheet(
+  note: DailyNote,
+  options?: SyncOptions
+): Promise<{ success: boolean; error?: string }> {
   const url = getSheetUrl();
   if (!url) return { success: false, error: 'No Google Sheet URL configured' };
 
   try {
-    const response = await fetch(url, {
+    const payload = preparePayload(note, options);
+    await fetch(url, {
       method: 'POST',
-      mode: 'no-cors', // Apps Script requires no-cors from client
+      mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(note),
+      body: JSON.stringify(payload),
     });
 
-    // no-cors returns opaque response, so we can't read it
-    // but if fetch didn't throw, it was sent successfully
     return { success: true };
   } catch (error) {
     return { success: false, error: String(error) };
   }
 }
 
-export async function syncAllNotesToSheet(notes: DailyNote[]): Promise<{ success: boolean; error?: string }> {
+export async function syncAllNotesToSheet(
+  notes: DailyNote[],
+  options?: SyncOptions
+): Promise<{ success: boolean; error?: string }> {
   const url = getSheetUrl();
   if (!url) return { success: false, error: 'No Google Sheet URL configured' };
   if (notes.length === 0) return { success: false, error: 'No notes to sync' };
 
   try {
+    const payloads = notes.map(n => preparePayload(n, options));
     await fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(notes),
+      body: JSON.stringify(payloads),
     });
 
     return { success: true };

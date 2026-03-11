@@ -21,6 +21,8 @@ export interface DailyNote {
   notes: string;
   createdAt: string; // ISO datetime
   updatedAt: string; // ISO datetime
+  aiEnhanced?: boolean;
+  originalNotes?: string;
 }
 
 export interface DayStatus {
@@ -30,3 +32,35 @@ export interface DayStatus {
   status: 'completed' | 'missed';
   note?: DailyNote;
 }
+
+export type UserRole = 'provider' | 'admin';
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  pin: string;
+}
+
+export interface AppSession {
+  role: UserRole;
+  user: Provider | AdminUser;
+}
+
+export interface AppSettings {
+  phiProtectionEnabled: boolean;
+  aiApiKey: string;
+  aiProvider: 'openai' | 'none';
+}
+
+export type AppView =
+  | 'login'
+  | 'dashboard'
+  | 'log'
+  | 'export'
+  | 'settings'
+  | 'admin-dashboard'
+  | 'admin-providers'
+  | 'admin-clients'
+  | 'admin-assignments'
+  | 'admin-notes';

@@ -4,11 +4,9 @@
  * SETUP INSTRUCTIONS:
  * 1. Create a new Google Sheet
  * 2. Name the first sheet "Daily Notes"
- * 3. Add these headers in Row 1:
- *    A1: ID | B1: Provider Name | C1: Provider ID | D1: Client Name | E1: Client ID
- *    F1: Date | G1: Services Provided | H1: Notes | I1: Created At | J1: Updated At
- * 4. Go to Extensions > Apps Script
- * 5. Paste this entire script and save
+ * 3. Go to Extensions > Apps Script
+ * 4. Paste this entire script and save
+ * 5. Run the setupSheet function once (it creates headers automatically)
  * 6. Click Deploy > New deployment
  * 7. Type: Web app
  * 8. Execute as: Me
@@ -44,7 +42,9 @@ function doPost(e) {
         note.servicesProvided ? "Yes" : "No",
         note.notes,
         note.createdAt,
-        note.updatedAt
+        note.updatedAt,
+        note.aiEnhanced ? "Yes" : "No",
+        note.originalNotes || ""
       ];
 
       if (existingRow > 0) {
@@ -127,7 +127,8 @@ function setupSheet() {
 
   var headers = [
     "ID", "Provider Name", "Provider ID", "Client Name", "Client ID",
-    "Date", "Services Provided", "Notes", "Created At", "Updated At"
+    "Date", "Services Provided", "Notes", "Created At", "Updated At",
+    "AI Enhanced", "Original Notes"
   ];
 
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
