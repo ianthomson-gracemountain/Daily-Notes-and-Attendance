@@ -23,9 +23,18 @@ export default function LoginView({ providers, adminUsers, onLogin }: LoginViewP
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
-  function handleProviderLogin(p: Provider) {
-    onLogin({ role: 'provider', user: p });
+  function handleEmailLogin() {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    const match = providers.find(p => p.email.toLowerCase() === trimmed.toLowerCase());
+    if (match) {
+      onLogin({ role: 'provider', user: match });
+    } else {
+      setEmailError('Email not recognized. Please contact your administrator.');
+    }
   }
 
   function handleAdminSelect(admin: AdminUser) {
@@ -50,12 +59,12 @@ export default function LoginView({ providers, adminUsers, onLogin }: LoginViewP
         <MountainIcon />
       </div>
       <h2 className="text-2xl text-gm-green mb-1" style={{ fontFamily: 'var(--font-graduate), Graduate, cursive' }}>Daily Notes</h2>
-      <p className="text-gm-gold text-sm mb-6">Select your role to get started</p>
+      <p className="text-gm-gold text-sm mb-6">Sign in to get started</p>
 
       {/* Tabs */}
       <div className="flex bg-gray-100 rounded-lg p-1 mb-6 w-full max-w-sm">
         <button
-          onClick={() => { setTab('provider'); setSelectedAdmin(null); setPin(''); setPinError(''); }}
+          onClick={() => { setTab('provider'); setSelectedAdmin(null); setPin(''); setPinError(''); setEmailError(''); }}
           className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
             tab === 'provider' ? 'bg-white text-gm-green shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
@@ -73,23 +82,30 @@ export default function LoginView({ providers, adminUsers, onLogin }: LoginViewP
       </div>
 
       <div className="w-full max-w-sm space-y-3">
-        {tab === 'provider' && providers.map(p => (
-          <button
-            key={p.id}
-            onClick={() => handleProviderLogin(p)}
-            className="w-full bg-white border-2 border-gray-200 hover:border-gm-gold rounded-xl px-5 py-4 text-left transition-all hover:shadow-md group"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-gm-green-dark">{p.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{p.email}</p>
-              </div>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gray-300 group-hover:text-gm-gold transition-colors">
-                <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </button>
-        ))}
+        {tab === 'provider' && (
+          <div className="bg-white border-2 border-gray-200 rounded-xl px-5 py-6">
+            <label className="block text-sm font-medium text-gray-600 mb-2">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setEmailError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') handleEmailLogin(); }}
+              placeholder="your.name@gracemountainagency.com"
+              className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gm-gold focus:outline-none transition-colors"
+              autoFocus
+            />
+            {emailError && (
+              <p className="text-sm text-gm-red mt-2">{emailError}</p>
+            )}
+            <button
+              onClick={handleEmailLogin}
+              disabled={!email.trim()}
+              className="w-full mt-4 bg-gm-green hover:bg-gm-green-light disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        )}
 
         {tab === 'admin' && !selectedAdmin && adminUsers.map(admin => (
           <button
