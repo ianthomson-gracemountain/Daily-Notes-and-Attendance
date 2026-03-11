@@ -16,28 +16,36 @@ export function getClientDisplayName(
 
 /**
  * Generate a coded identifier from a client name + ID.
+ * Uses first initial + last initial + numeric code.
  * e.g., "James Carter" with id "c1" -> "JC-001"
+ * e.g., "Mary Jane Watson" with id "c5" -> "MW-005"
  */
 function generateClientCode(client: Client): string {
   const parts = client.name.trim().split(/\s+/);
-  const initials = parts.map(p => p.charAt(0).toUpperCase()).join('');
+  const first = parts[0]?.charAt(0).toUpperCase() || 'X';
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0).toUpperCase() : 'X';
   const numericId = client.id.replace(/\D/g, '') || '0';
-  return `${initials}-${numericId.padStart(3, '0')}`;
+  return `${first}${last}-${numericId.padStart(3, '0')}`;
 }
 
 /**
- * Get initials from a name string for avatar display.
+ * Get initials from a name string for avatar display (first + last initial).
  */
 export function getInitials(name: string): string {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.charAt(0) || '';
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+  return (first + last).toUpperCase();
 }
 
 /**
  * Mask a client name string directly (for notes/exports where we don't have the Client object).
+ * Uses first initial + last initial + numeric code.
  */
 export function maskClientNameStr(name: string, clientId: string): string {
   const parts = name.trim().split(/\s+/);
-  const initials = parts.map(p => p.charAt(0).toUpperCase()).join('');
+  const first = parts[0]?.charAt(0).toUpperCase() || 'X';
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0).toUpperCase() : 'X';
   const numericId = clientId.replace(/\D/g, '') || '0';
-  return `${initials}-${numericId.padStart(3, '0')}`;
+  return `${first}${last}-${numericId.padStart(3, '0')}`;
 }
