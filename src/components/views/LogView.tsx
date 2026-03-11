@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Client, DailyNote, Provider, UserRole } from '@/lib/types';
-import { getNoteForClientDate, saveDailyNote, getAppSettings } from '@/lib/store';
+import { getNoteForClientDate, saveDailyNote, getAppSettings, getAllClients } from '@/lib/store';
 import { syncNoteToSheet } from '@/lib/sheets';
 import { getClientDisplayName } from '@/lib/phi';
 import { enhanceNote } from '@/lib/ai';
@@ -38,8 +38,10 @@ export default function LogView({
   const [originalNoteText, setOriginalNoteText] = useState('');
   const [showOriginal, setShowOriginal] = useState(false);
 
+  const allClients = getAllClients();
+
   function displayName(client: Client): string {
-    return getClientDisplayName(client, role, settings.phiProtectionEnabled);
+    return getClientDisplayName(client, role, settings.phiProtectionEnabled, allClients);
   }
 
   function formatDate(dateStr: string): string {

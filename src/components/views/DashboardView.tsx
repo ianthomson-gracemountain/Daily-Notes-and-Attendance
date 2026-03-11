@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Client, DayStatus, Provider, UserRole } from '@/lib/types';
-import { getClientsForProvider, getDayStatuses, getNoteForClientDate } from '@/lib/store';
+import { getClientsForProvider, getDayStatuses, getNoteForClientDate, getAllClients } from '@/lib/store';
 import { getClientDisplayName, getInitials } from '@/lib/phi';
 import { getAppSettings } from '@/lib/store';
 
@@ -61,8 +61,10 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
     });
   }
 
+  const allClients = getAllClients();
+
   function displayName(client: Client): string {
-    return getClientDisplayName(client, role, settings.phiProtectionEnabled);
+    return getClientDisplayName(client, role, settings.phiProtectionEnabled, allClients);
   }
 
   return (

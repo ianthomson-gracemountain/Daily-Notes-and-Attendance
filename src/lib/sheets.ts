@@ -1,5 +1,6 @@
 import { DailyNote } from './types';
 import { maskClientNameStr } from './phi';
+import { getAllClients } from './store';
 
 const SHEET_URL_KEY = 'gm_google_sheet_url';
 
@@ -25,7 +26,8 @@ interface SyncOptions {
 function preparePayload(note: DailyNote, options?: SyncOptions): Record<string, unknown> {
   const payload: Record<string, unknown> = { ...note };
   if (options?.maskClientName) {
-    payload.clientName = maskClientNameStr(note.clientName, note.clientId);
+    const allClients = getAllClients();
+    payload.clientName = maskClientNameStr(note.clientName, note.clientId, allClients);
   }
   // Ensure AI fields are included (even if undefined)
   payload.aiEnhanced = note.aiEnhanced || false;

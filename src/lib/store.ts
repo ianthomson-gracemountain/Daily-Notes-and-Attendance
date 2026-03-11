@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Provider, Client, DailyNote, DayStatus, AdminUser, AppSession, AppSettings } from './types';
+import { maskClientNameStr } from './phi';
 
 const STORAGE_KEYS = {
   providers: 'gm_providers',
@@ -316,10 +317,8 @@ export function exportToJSON(providerId?: string): string {
 }
 
 function maskClientName(name: string, id: string): string {
-  const parts = name.trim().split(/\s+/);
-  const initials = parts.map(p => p.charAt(0).toUpperCase()).join('');
-  const numericId = id.replace(/\D/g, '') || '0';
-  return `${initials}-${numericId.padStart(3, '0')}`;
+  const clients = getAllClients();
+  return maskClientNameStr(name, id, clients);
 }
 
 export function downloadFile(content: string, filename: string, type: string): void {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { DailyNote, UserRole } from '@/lib/types';
-import { getAllNotes, getNotesForProvider, exportToCSV, exportToJSON, downloadFile, getAppSettings } from '@/lib/store';
+import { getAllNotes, getNotesForProvider, exportToCSV, exportToJSON, downloadFile, getAppSettings, getAllClients } from '@/lib/store';
 import { maskClientNameStr } from '@/lib/phi';
 
 interface ExportViewProps {
@@ -21,9 +21,10 @@ export default function ExportView({ providerId, role, showToast }: ExportViewPr
   }, [providerId]);
 
   const shouldMask = role === 'provider' && settings.phiProtectionEnabled;
+  const allClients = getAllClients();
 
   function clientDisplay(note: DailyNote): string {
-    if (shouldMask) return maskClientNameStr(note.clientName, note.clientId);
+    if (shouldMask) return maskClientNameStr(note.clientName, note.clientId, allClients);
     return note.clientName;
   }
 
