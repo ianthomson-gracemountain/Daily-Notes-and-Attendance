@@ -24,8 +24,8 @@ export default function SettingsView({ role, showToast, sheetConnected, setSheet
 
   return (
     <div className="max-w-lg mx-auto space-y-6 fade-in">
-      {/* Google Sheets Integration */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      {/* Google Sheets Integration — Admin only */}
+      {role === 'admin' && (<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gm-green-dark mb-2" style={{ fontFamily: 'var(--font-graduate), Graduate, cursive' }}>
           Google Sheets Integration
         </h3>
@@ -121,10 +121,10 @@ export default function SettingsView({ role, showToast, sheetConnected, setSheet
             </button>
           </div>
         )}
-      </div>
+      </div>)}
 
-      {/* AI Note Enhancement */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      {/* AI Note Enhancement — Admin only */}
+      {role === 'admin' && (<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gm-green-dark mb-2" style={{ fontFamily: 'var(--font-graduate), Graduate, cursive' }}>
           AI Note Enhancement
         </h3>
@@ -207,7 +207,7 @@ export default function SettingsView({ role, showToast, sheetConnected, setSheet
             </ul>
           </div>
         </div>
-      </div>
+      </div>)}
 
       {/* PHI Protection */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
