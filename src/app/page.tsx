@@ -10,8 +10,9 @@ import {
   clearSession,
   getClientsForProvider,
   getAdminUsers,
+  mergeNotesFromSheet,
 } from '@/lib/store';
-import { getSheetUrl } from '@/lib/sheets';
+import { getSheetUrl, fetchNotesFromSheet } from '@/lib/sheets';
 
 import Header from '@/components/layout/Header';
 import Navigation from '@/components/layout/Navigation';
@@ -44,6 +45,8 @@ export default function Home() {
   const [logInitialStep, setLogInitialStep] = useState<'select' | 'confirm' | undefined>(undefined);
   // Key to force remount of LogView when starting a new log
   const [logKey, setLogKey] = useState(0);
+  // Key to force remount of views after syncing notes from Google Sheet
+  const [syncVersion, setSyncVersion] = useState(0);
 
   useEffect(() => {
     initializeStore();
@@ -60,6 +63,13 @@ export default function Home() {
     setProvidersList(getProviders());
     if (getSheetUrl()) {
       setSheetConnected(true);
+      // Fetch notes from Google Sheet and merge into localStorage
+      fetchNotesFromSheet().then(result => {
+        if (result.success && result.data.length > 0) {
+          mergeNotesFromSheet(result.data);
+          setSyncVersion(v => v + 1);
+        }
+      });
     }
     setInitialized(true);
   }, []);
@@ -138,6 +148,7 @@ export default function Home() {
 
         {view === 'dashboard' && session?.role === 'provider' && (
           <DashboardView
+            key={syncVersion}
             provider={session.user as Provider}
             role={session.role}
             clients={clients}
@@ -178,7 +189,7 @@ export default function Home() {
         )}
 
         {view === 'admin-dashboard' && session?.role === 'admin' && (
-          <AdminDashboardView />
+          <AdminDashboardView key={syncVersion} />
         )}
 
         {view === 'admin-providers' && session?.role === 'admin' && (
@@ -194,7 +205,7 @@ export default function Home() {
         )}
 
         {view === 'admin-notes' && session?.role === 'admin' && (
-          <AllNotesView />
+          <AllNotesView key={syncVersion} />
         )}
       </main>
 

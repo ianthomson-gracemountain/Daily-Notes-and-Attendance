@@ -338,6 +338,29 @@ export function getDayStatuses(providerId: string, startDate: Date, endDate: Dat
   return statuses;
 }
 
+// --- Merge notes from Google Sheet ---
+export function mergeNotesFromSheet(sheetNotes: DailyNote[]): void {
+  const localNotes = getAllNotes();
+  const merged = [...localNotes];
+
+  for (const sheetNote of sheetNotes) {
+    const existingIdx = merged.findIndex(
+      n => n.clientId === sheetNote.clientId && n.date === sheetNote.date
+    );
+
+    if (existingIdx >= 0) {
+      // Keep the most recently updated version
+      if (sheetNote.updatedAt > merged[existingIdx].updatedAt) {
+        merged[existingIdx] = sheetNote;
+      }
+    } else {
+      merged.push(sheetNote);
+    }
+  }
+
+  setItem(STORAGE_KEYS.notes, merged);
+}
+
 // --- App Settings ---
 export function getAppSettings(): AppSettings {
   return getItem<AppSettings>(STORAGE_KEYS.appSettings) || DEFAULT_SETTINGS;

@@ -58,6 +58,45 @@ export async function syncNoteToSheet(
   }
 }
 
+export async function fetchNotesFromSheet(): Promise<{ success: boolean; data: DailyNote[]; error?: string }> {
+  const url = getSheetUrl();
+  if (!url) return { success: false, data: [], error: 'No Google Sheet URL configured' };
+
+  try {
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (!result.success || !result.data) {
+      return { success: false, data: [], error: result.error || 'Failed to fetch notes' };
+    }
+
+    // Transform sheet data to DailyNote format
+    // The headerToKey function in the Apps Script produces these keys:
+    // "ID" → "iD", "Provider ID" → "providerID", "Client ID" → "clientID",
+    // "AI Enhanced" → "aIEnhanced", etc.
+    const notes: DailyNote[] = result.data
+      .filter((row: Record<string, unknown>) => row.iD && row.date)
+      .map((row: Record<string, unknown>) => ({
+        id: String(row.iD || ''),
+        providerId: String(row.providerID || ''),
+        providerName: String(row.providerName || ''),
+        clientId: String(row.clientID || ''),
+        clientName: String(row.clientName || ''),
+        date: String(row.date || '').split('T')[0],
+        servicesProvided: row.servicesProvided === 'Yes' || row.servicesProvided === true,
+        notes: String(row.notes || ''),
+        createdAt: String(row.createdAt || ''),
+        updatedAt: String(row.updatedAt || ''),
+        aiEnhanced: row.aIEnhanced === 'Yes' || row.aIEnhanced === true,
+        originalNotes: row.originalNotes ? String(row.originalNotes) : undefined,
+      }));
+
+    return { success: true, data: notes };
+  } catch (error) {
+    return { success: false, data: [], error: String(error) };
+  }
+}
+
 export async function syncAllNotesToSheet(
   notes: DailyNote[],
   options?: SyncOptions
