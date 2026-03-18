@@ -38,7 +38,7 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
   const refreshDashboard = useCallback(() => {
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+    startOfWeek.setDate(today.getDate() - today.getDay());
     const endOfWeek = new Date(today);
 
     const statuses = getDayStatuses(provider.id, startOfWeek, endOfWeek);

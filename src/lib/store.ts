@@ -316,20 +316,16 @@ export function getDayStatuses(providerId: string, startDate: Date, endDate: Dat
   const current = new Date(startDate);
   while (current <= endDate) {
     const dateStr = current.toISOString().split('T')[0];
-    const dayOfWeek = current.getDay();
 
-    // Skip weekends
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      for (const client of clients) {
-        const note = notes.find(n => n.clientId === client.id && n.date === dateStr);
-        statuses.push({
-          date: dateStr,
-          clientId: client.id,
-          clientName: client.name,
-          status: note ? 'completed' : 'missed',
-          note: note || undefined,
-        });
-      }
+    for (const client of clients) {
+      const note = notes.find(n => n.clientId === client.id && n.date === dateStr);
+      statuses.push({
+        date: dateStr,
+        clientId: client.id,
+        clientName: client.name,
+        status: note ? 'completed' : 'missed',
+        note: note || undefined,
+      });
     }
 
     current.setDate(current.getDate() + 1);
