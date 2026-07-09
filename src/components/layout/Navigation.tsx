@@ -19,6 +19,7 @@ export default function Navigation({ view, setView, role, onStartLog }: Navigati
   const providerTabs: TabItem[] = [
     { label: 'Dashboard', view: 'dashboard' },
     { label: 'Daily Notes', view: 'log', action: onStartLog },
+    { label: 'My Notes', view: 'notes-history' },
     { label: 'Export Data', view: 'export' },
     { label: 'Settings', view: 'settings' },
   ];

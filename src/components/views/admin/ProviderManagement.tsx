@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Provider, Client } from '@/lib/types';
-import { getProviders, addProvider, removeProvider, getAllClients } from '@/lib/store';
+import { getProviders, addProvider, removeProvider, getActiveClients } from '@/lib/store';
 
 interface ProviderManagementProps {
   showToast: (msg: string) => void;
@@ -18,12 +18,12 @@ export default function ProviderManagement({ showToast }: ProviderManagementProp
 
   useEffect(() => {
     setProviders(getProviders());
-    setClients(getAllClients());
+    setClients(getActiveClients());
   }, []);
 
   function refresh() {
     setProviders(getProviders());
-    setClients(getAllClients());
+    setClients(getActiveClients());
   }
 
   function handleAdd() {

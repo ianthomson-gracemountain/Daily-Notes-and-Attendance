@@ -6,6 +6,7 @@ import { getNoteForClientDate, saveDailyNote, getAppSettings, getAllClients } fr
 import { syncNoteToSheet } from '@/lib/sheets';
 import { getClientDisplayName } from '@/lib/phi';
 import { enhanceNote } from '@/lib/ai';
+import { getMountainToday } from '@/lib/dates';
 
 interface LogViewProps {
   provider: Provider;
@@ -27,7 +28,7 @@ export default function LogView({
   const settings = getAppSettings();
   const [logStep, setLogStep] = useState<'select' | 'confirm' | 'note' | 'done'>(initialStep || 'select');
   const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient || null);
-  const [selectedDate, setSelectedDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(initialDate || getMountainToday());
   const [servicesProvided, setServicesProvided] = useState<boolean | null>(null);
   const [noteText, setNoteText] = useState('');
   const [existingNote, setExistingNote] = useState<DailyNote | null>(null);
@@ -55,8 +56,7 @@ export default function LogView({
     const existing = getNoteForClientDate(selectedClient.id, selectedDate);
     if (existing) {
       setExistingNote(existing);
-      setServicesProvided(existing.servicesProvided);
-      setNoteText(existing.notes);
+      return; // Note already logged — block further editing
     }
     setLogStep('confirm');
   }
@@ -150,7 +150,7 @@ export default function LogView({
             {clients.map(client => (
               <button
                 key={client.id}
-                onClick={() => setSelectedClient(client)}
+                onClick={() => { setSelectedClient(client); setExistingNote(null); }}
                 className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${selectedClient?.id === client.id ? 'border-gm-gold bg-amber-50' : 'border-gray-200 hover:border-gray-300'}`}
               >
                 <p className="font-medium text-sm">{displayName(client)}</p>
@@ -162,8 +162,8 @@ export default function LogView({
           <input
             type="date"
             value={selectedDate}
-            onChange={e => setSelectedDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+            onChange={e => { setSelectedDate(e.target.value); setExistingNote(null); }}
+            max={getMountainToday()}
             className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gm-gold focus:outline-none transition-colors"
           />
 
@@ -174,17 +174,21 @@ export default function LogView({
           >
             Continue
           </button>
+
+          {existingNote && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
+              <p className="font-medium">Note already logged for this date.</p>
+              <p className="text-xs mt-1 text-amber-600">
+                Notes are permanent records and cannot be edited. View your past notes in the &quot;My Notes&quot; tab.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Step 2: Did you provide services? */}
       {logStep === 'confirm' && selectedClient && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 slide-up">
-          {existingNote && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-sm text-amber-700">
-              A note already exists for this date. You can update it below.
-            </div>
-          )}
           <h3 className="text-lg font-semibold text-gm-green-dark mb-2" style={{ fontFamily: 'var(--font-graduate), Graduate, cursive' }}>
             Service Confirmation
           </h3>

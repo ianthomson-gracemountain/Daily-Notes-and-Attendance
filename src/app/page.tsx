@@ -21,6 +21,7 @@ import Toast from '@/components/layout/Toast';
 import LoginView from '@/components/views/LoginView';
 import DashboardView from '@/components/views/DashboardView';
 import LogView from '@/components/views/LogView';
+import NotesHistoryView from '@/components/views/NotesHistoryView';
 import ExportView from '@/components/views/ExportView';
 import SettingsView from '@/components/views/SettingsView';
 
@@ -168,6 +169,14 @@ export default function Home() {
             initialClient={logInitialClient}
             initialDate={logInitialDate}
             initialStep={logInitialStep}
+          />
+        )}
+
+        {view === 'notes-history' && session?.role === 'provider' && (
+          <NotesHistoryView
+            key={syncVersion}
+            provider={session.user as Provider}
+            role={session.role}
           />
         )}
 

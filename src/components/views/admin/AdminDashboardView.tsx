@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Provider, Client, DailyNote } from '@/lib/types';
-import { getProviders, getAllClients, getAllNotes, getUnassignedClients } from '@/lib/store';
+import { getProviders, getActiveClients, getAllNotes, getUnassignedClients } from '@/lib/store';
+import { getMountainToday } from '@/lib/dates';
 
 export default function AdminDashboardView() {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -12,12 +13,12 @@ export default function AdminDashboardView() {
 
   useEffect(() => {
     setProviders(getProviders());
-    setClients(getAllClients());
+    setClients(getActiveClients());
     setNotes(getAllNotes());
     setUnassigned(getUnassignedClients());
   }, []);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getMountainToday();
   const todayNotes = notes.filter(n => n.date === today);
   const recentNotes = [...notes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10);
 

@@ -9,15 +9,6 @@ interface LoginViewProps {
   onLogin: (session: AppSession) => void;
 }
 
-function MountainIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-gm-cream">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 20l5.5-11L12 15l3.5-7L21 20H3z" />
-      <circle cx="17" cy="6" r="2" />
-    </svg>
-  );
-}
-
 export default function LoginView({ providers, adminUsers, onLogin }: LoginViewProps) {
   const [tab, setTab] = useState<'provider' | 'admin'>('provider');
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
@@ -55,8 +46,8 @@ export default function LoginView({ providers, adminUsers, onLogin }: LoginViewP
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] fade-in">
-      <div className="bg-gm-green rounded-full w-20 h-20 flex items-center justify-center mb-6 shadow-lg">
-        <MountainIcon />
+      <div className="bg-gm-green rounded-full w-20 h-20 flex items-center justify-center mb-6 shadow-lg overflow-hidden">
+        <img src="/logo.png" alt="Grace Mountain" className="w-20 h-20 object-contain p-1" />
       </div>
       <h2 className="text-2xl text-gm-green mb-1" style={{ fontFamily: 'var(--font-graduate), Graduate, cursive' }}>Daily Notes</h2>
       <p className="text-gm-gold text-sm mb-6">Sign in to get started</p>

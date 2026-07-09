@@ -5,6 +5,7 @@ import { Client, DayStatus, Provider, UserRole } from '@/lib/types';
 import { getClientsForProvider, getDayStatuses, getNoteForClientDate, getAllClients } from '@/lib/store';
 import { getClientDisplayName, getInitials } from '@/lib/phi';
 import { getAppSettings } from '@/lib/store';
+import { getMountainWeekRange, getMountainToday } from '@/lib/dates';
 
 interface DashboardViewProps {
   provider: Provider;
@@ -13,17 +14,22 @@ interface DashboardViewProps {
   onStartLog: (client?: Client, date?: string) => void;
 }
 
-function BellIcon({ missed }: { missed: boolean }) {
+function StatusIcon({ status }: { status: 'completed' | 'missed' | 'pending' }) {
+  const colorClass = status === 'missed' ? 'text-gm-red bell-shake' : status === 'completed' ? 'text-gm-success' : 'text-gray-300';
   return (
-    <span className={`inline-flex items-center justify-center w-6 h-6 ${missed ? 'text-gm-red bell-shake' : 'text-gm-success'}`}>
-      {missed ? (
+    <span className={`inline-flex items-center justify-center w-6 h-6 ${colorClass}`}>
+      {status === 'missed' ? (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
           <path d="M5.85 3.5a.75.75 0 0 0-1.117-1 9.719 9.719 0 0 0-2.348 4.876.75.75 0 0 0 1.479.248A8.219 8.219 0 0 1 5.85 3.5ZM19.267 2.5a.75.75 0 1 0-1.118 1 8.22 8.22 0 0 1 1.987 4.124.75.75 0 0 0 1.48-.248A9.72 9.72 0 0 0 19.266 2.5Z" />
           <path fillRule="evenodd" d="M12 2.25A6.75 6.75 0 0 0 5.25 9v.75a8.217 8.217 0 0 1-2.119 5.52.75.75 0 0 0 .298 1.206c1.544.57 3.16.99 4.831 1.243a3.75 3.75 0 1 0 7.48 0 24.583 24.583 0 0 0 4.83-1.244.75.75 0 0 0 .298-1.205 8.217 8.217 0 0 1-2.118-5.52V9A6.75 6.75 0 0 0 12 2.25ZM9.75 18c0-.034 0-.067.002-.1a25.05 25.05 0 0 0 4.496 0l.002.1a2.25 2.25 0 1 1-4.5 0Z" clipRule="evenodd" />
         </svg>
-      ) : (
+      ) : status === 'completed' ? (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
           <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+          <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.5 5.25a.75.75 0 0 0-.75.75v4.5c0 .414.336.75.75.75h3a.75.75 0 0 0 0-1.5H11.25v-3.75a.75.75 0 0 0-.75-.75Z" clipRule="evenodd" />
         </svg>
       )}
     </span>
@@ -36,17 +42,15 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
   const settings = getAppSettings();
 
   const refreshDashboard = useCallback(() => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    const endOfWeek = new Date(today);
+    const { start, end } = getMountainWeekRange();
 
-    const statuses = getDayStatuses(provider.id, startOfWeek, endOfWeek);
+    const statuses = getDayStatuses(provider.id, start, end);
     setDayStatuses(statuses);
 
     const total = statuses.length;
     const completed = statuses.filter(s => s.status === 'completed').length;
-    setStats({ total, completed, missed: total - completed });
+    const missed = statuses.filter(s => s.status === 'missed').length;
+    setStats({ total, completed, missed });
   }, [provider.id]);
 
   useEffect(() => {
@@ -132,7 +136,7 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <BellIcon missed={status.status === 'missed'} />
+                    <StatusIcon status={status.status} />
                     <div>
                       <p className="text-sm font-medium text-gray-800">
                         {client ? displayName(client) : status.clientName}
@@ -145,12 +149,16 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
                       <span className="text-xs bg-gm-success-light text-gm-success font-medium px-2.5 py-1 rounded-full">
                         {status.note?.servicesProvided ? 'Services Provided' : 'Absent'}
                       </span>
-                    ) : (
+                    ) : status.status === 'missed' ? (
                       <span className="text-xs bg-gm-red-light text-gm-red font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
                         Tap to log
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
                           <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" />
                         </svg>
+                      </span>
+                    ) : (
+                      <span className="text-xs bg-gray-100 text-gray-400 font-medium px-2.5 py-1 rounded-full">
+                        Upcoming
                       </span>
                     )}
                   </div>
@@ -168,7 +176,7 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
         </div>
         <div className="divide-y divide-gray-50">
           {clients.map(client => {
-            const todayNote = getNoteForClientDate(client.id, new Date().toISOString().split('T')[0]);
+            const todayNote = getNoteForClientDate(client.id, getMountainToday());
             const name = displayName(client);
             return (
               <div key={client.id} className="px-5 py-3 flex items-center justify-between">
@@ -183,12 +191,18 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => onStartLog(client)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${todayNote ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' : 'bg-gm-coral text-white hover:bg-gm-coral-light'}`}
-                >
-                  {todayNote ? 'Edit' : 'Log Now'}
-                </button>
+                {todayNote ? (
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gm-success-light text-gm-success">
+                    Logged
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => onStartLog(client)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gm-coral text-white hover:bg-gm-coral-light transition-colors"
+                  >
+                    Log Now
+                  </button>
+                )}
               </div>
             );
           })}

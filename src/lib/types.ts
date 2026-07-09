@@ -8,6 +8,9 @@ export interface Client {
   id: string;
   name: string;
   providerId: string;
+  archived?: boolean;
+  archivedAt?: string; // ISO datetime
+  archivedReason?: string;
 }
 
 export interface DailyNote {
@@ -29,7 +32,7 @@ export interface DayStatus {
   date: string;
   clientId: string;
   clientName: string;
-  status: 'completed' | 'missed';
+  status: 'completed' | 'missed' | 'pending';
   note?: DailyNote;
 }
 
@@ -57,6 +60,7 @@ export type AppView =
   | 'login'
   | 'dashboard'
   | 'log'
+  | 'notes-history'
   | 'export'
   | 'settings'
   | 'admin-dashboard'

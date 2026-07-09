@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Provider, Client } from '@/lib/types';
-import { getProviders, getAllClients, addClient, removeClient, reassignClient } from '@/lib/store';
+import {
+  getProviders,
+  getAllClients,
+  addClient,
+  removeClient,
+  reassignClient,
+  archiveClient,
+  unarchiveClient,
+} from '@/lib/store';
 
 interface ClientManagementProps {
   showToast: (msg: string) => void;
@@ -12,9 +20,11 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [name, setName] = useState('');
   const [selectedProviderId, setSelectedProviderId] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmArchive, setConfirmArchive] = useState<string | null>(null);
+  const [confirmPurge, setConfirmPurge] = useState<string | null>(null);
 
   useEffect(() => {
     setClients(getAllClients());
@@ -39,15 +49,32 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
     showToast('Client added!');
   }
 
-  function handleRemove(id: string) {
-    if (confirmDelete !== id) {
-      setConfirmDelete(id);
+  function handleArchive(id: string) {
+    if (confirmArchive !== id) {
+      setConfirmArchive(id);
+      return;
+    }
+    archiveClient(id, 'Archived by admin');
+    setConfirmArchive(null);
+    refresh();
+    showToast('Client archived. History preserved.');
+  }
+
+  function handleUnarchive(id: string) {
+    unarchiveClient(id);
+    refresh();
+    showToast('Client unarchived');
+  }
+
+  function handlePurge(id: string) {
+    if (confirmPurge !== id) {
+      setConfirmPurge(id);
       return;
     }
     removeClient(id);
-    setConfirmDelete(null);
+    setConfirmPurge(null);
     refresh();
-    showToast('Client removed');
+    showToast('Client permanently deleted');
   }
 
   function handleReassign(clientId: string, newProviderId: string) {
@@ -56,10 +83,8 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
     showToast('Client reassigned');
   }
 
-  function getProviderName(providerId: string): string {
-    if (!providerId) return 'Unassigned';
-    return providers.find(p => p.id === providerId)?.name || 'Unknown';
-  }
+  const activeClients = clients.filter(c => !c.archived);
+  const archivedClients = clients.filter(c => c.archived);
 
   return (
     <div className="space-y-6 fade-in">
@@ -107,9 +132,16 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
         </div>
       )}
 
+      {/* Active Clients */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gm-green-dark">
+            Active Clients
+            <span className="ml-2 text-xs font-normal text-gray-400">({activeClients.length})</span>
+          </h3>
+        </div>
         <div className="divide-y divide-gray-50">
-          {clients.map(c => (
+          {activeClients.map(c => (
             <div key={c.id} className="px-5 py-4">
               <div className="flex items-center justify-between mb-2">
                 <div>
@@ -117,16 +149,16 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
                   <p className="text-xs text-gray-400 mt-0.5">ID: {c.id}</p>
                 </div>
                 <div>
-                  {confirmDelete === c.id ? (
+                  {confirmArchive === c.id ? (
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleRemove(c.id)}
-                        className="text-xs bg-gm-red text-white px-3 py-1.5 rounded-lg"
+                        onClick={() => handleArchive(c.id)}
+                        className="text-xs bg-gm-gold text-white px-3 py-1.5 rounded-lg"
                       >
-                        Confirm Delete
+                        Confirm Archive
                       </button>
                       <button
-                        onClick={() => setConfirmDelete(null)}
+                        onClick={() => setConfirmArchive(null)}
                         className="text-xs text-gray-400 hover:text-gray-600"
                       >
                         Cancel
@@ -134,10 +166,11 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
                     </div>
                   ) : (
                     <button
-                      onClick={() => handleRemove(c.id)}
-                      className="text-xs text-gm-red/60 hover:text-gm-red transition-colors"
+                      onClick={() => handleArchive(c.id)}
+                      className="text-xs text-gm-gold/70 hover:text-gm-gold transition-colors"
+                      title="Archive client (preserves history)"
                     >
-                      Remove
+                      Archive
                     </button>
                   )}
                 </div>
@@ -157,11 +190,90 @@ export default function ClientManagement({ showToast }: ClientManagementProps) {
               </div>
             </div>
           ))}
-          {clients.length === 0 && (
-            <div className="px-5 py-8 text-center text-gray-400 text-sm">No clients yet.</div>
+          {activeClients.length === 0 && (
+            <div className="px-5 py-8 text-center text-gray-400 text-sm">No active clients.</div>
           )}
         </div>
       </div>
+
+      {/* Archived Clients */}
+      {archivedClients.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="w-full px-5 py-3 border-b border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <h3 className="text-sm font-semibold text-gray-500">
+              Archived Clients
+              <span className="ml-2 text-xs font-normal text-gray-400">({archivedClients.length})</span>
+            </h3>
+            <span className="text-xs text-gray-400">{showArchived ? 'Hide' : 'Show'}</span>
+          </button>
+          {showArchived && (
+            <div className="divide-y divide-gray-50">
+              {archivedClients.map(c => {
+                const providerName = c.providerId
+                  ? providers.find(p => p.id === c.providerId)?.name || 'Unknown'
+                  : 'Unassigned';
+                return (
+                  <div key={c.id} className="px-5 py-4 bg-gray-50/50">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-gray-600">
+                          {c.name}
+                          <span className="ml-2 text-[10px] font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full align-middle">ARCHIVED</span>
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">ID: {c.id} &middot; Last provider: {providerName}</p>
+                        {c.archivedReason && (
+                          <p className="text-xs text-gray-400 mt-0.5">Reason: {c.archivedReason}</p>
+                        )}
+                        {c.archivedAt && (
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            Archived: {new Date(c.archivedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <button
+                          onClick={() => handleUnarchive(c.id)}
+                          className="text-xs text-gm-green hover:text-gm-green-dark transition-colors"
+                        >
+                          Unarchive
+                        </button>
+                        {confirmPurge === c.id ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handlePurge(c.id)}
+                              className="text-xs bg-gm-red text-white px-2 py-1 rounded-md"
+                              title="Permanently delete record and ability to see history via client list"
+                            >
+                              Confirm Delete
+                            </button>
+                            <button
+                              onClick={() => setConfirmPurge(null)}
+                              className="text-xs text-gray-400 hover:text-gray-600"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handlePurge(c.id)}
+                            className="text-[11px] text-gm-red/50 hover:text-gm-red transition-colors"
+                            title="Permanently delete (cannot be undone)"
+                          >
+                            Delete permanently
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

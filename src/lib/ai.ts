@@ -67,6 +67,77 @@ export async function enhanceNote(
   }
 }
 
+export interface AIAnalysisResult {
+  success: boolean;
+  analysis?: string;
+  error?: string;
+}
+
+const ANALYSIS_PROMPT = `You are analyzing daily service notes written by a foster care service provider about their clients.
+
+Review the notes below and provide a concise synopsis of patterns you observe. Focus on:
+- Attendance patterns (frequency of services vs. absences)
+- Recurring themes in client activities or behaviors
+- Notable changes or trends over time
+- Any concerns or positive developments worth highlighting
+
+Keep your response to 3-5 short paragraphs. Use professional, objective language. Do not use bullet points. Do not repeat the notes back. Focus only on patterns and insights.`;
+
+export async function analyzeNotePatterns(
+  notes: Array<{ date: string; clientName: string; servicesProvided: boolean; notes: string }>,
+  apiKey: string
+): Promise<AIAnalysisResult> {
+  if (!apiKey) {
+    return { success: false, error: 'No API key configured. Add one in Settings.' };
+  }
+  if (notes.length < 3) {
+    return { success: false, error: 'Need at least 3 notes to analyze patterns.' };
+  }
+
+  const notesSummary = notes
+    .slice(0, 60)
+    .map(n => `[${n.date}] ${n.clientName} — ${n.servicesProvided ? 'Services provided' : 'Absent'}: ${n.notes}`)
+    .join('\n\n');
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: ANALYSIS_PROMPT },
+          { role: 'user', content: notesSummary },
+        ],
+        temperature: 0.4,
+        max_tokens: 1500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = (errorData as { error?: { message?: string } })?.error?.message || `API error: ${response.status}`;
+      return { success: false, error: message };
+    }
+
+    const data = await response.json() as {
+      choices: Array<{ message: { content: string } }>;
+    };
+    const analysis = data.choices?.[0]?.message?.content?.trim();
+
+    if (!analysis) {
+      return { success: false, error: 'No response from AI' };
+    }
+
+    return { success: true, analysis };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
 /**
  * Test if an OpenAI API key is valid by making a minimal request.
  */

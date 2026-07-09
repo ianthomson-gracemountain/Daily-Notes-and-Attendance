@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Provider, Client } from '@/lib/types';
-import { getProviders, getAllClients, getUnassignedClients, reassignClient } from '@/lib/store';
+import { getProviders, getActiveClients, getUnassignedClients, reassignClient } from '@/lib/store';
 import { getInitials } from '@/lib/phi';
 
 interface AssignmentViewProps {
@@ -21,7 +21,7 @@ export default function AssignmentView({ showToast }: AssignmentViewProps) {
 
   function refresh() {
     setProviders(getProviders());
-    setClients(getAllClients());
+    setClients(getActiveClients());
     setUnassigned(getUnassignedClients());
   }
 

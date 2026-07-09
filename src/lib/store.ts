@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Provider, Client, DailyNote, DayStatus, AdminUser, AppSession, AppSettings } from './types';
 import { maskClientNameStr } from './phi';
+import { getDateRange, getMountainToday } from './dates';
 
 const STORAGE_KEYS = {
   providers: 'gm_providers',
@@ -64,7 +65,7 @@ const SAMPLE_CLIENTS: Client[] = [
   // Sunny Gebrgiabher
   { id: 'c11', name: 'Derek Powers', providerId: 'p9' },
   // Ash Gelaw
-  { id: 'c12', name: 'Jonathan Kopec', providerId: 'p10' },
+  { id: 'c12', name: 'Jonathan Kopec', providerId: 'p10', archived: true, archivedAt: '2026-04-20T00:00:00.000Z', archivedReason: 'Left the agency' },
   { id: 'c13', name: 'Gryffyn Raven', providerId: 'p10' },
   { id: 'c14', name: 'Nathaniel Weldon', providerId: 'p10' },
   // David George
@@ -79,8 +80,9 @@ const SAMPLE_CLIENTS: Client[] = [
   { id: 'c19', name: 'Elijah Smith', providerId: 'p15' },
   // Grace Lumowa
   { id: 'c20', name: 'Renee Valdez', providerId: 'p16' },
+  { id: 'c34', name: 'Jacob Koldeway', providerId: 'p16' },
   // Jonas Mancho
-  { id: 'c21', name: 'Jonathan Kopec', providerId: 'p17' },
+  { id: 'c21', name: 'Nathaniel Weldon', providerId: 'p17' },
   // Meidy Rangingisan
   { id: 'c22', name: 'Joshua Quammen', providerId: 'p18' },
   // Abby Tesfaye
@@ -148,6 +150,68 @@ export function initializeStore(): void {
   const existingSession = getItem<AppSession>(STORAGE_KEYS.currentSession);
   if (oldProvider && !existingSession) {
     setItem(STORAGE_KEYS.currentSession, { role: 'provider', user: oldProvider } as AppSession);
+  }
+
+  // Data fix (2026-04-20 v3):
+  //   - Jonas Mancho (p17) now has Nathaniel Weldon as a separate client (slot c21).
+  //   - Jonathan Kopec has left the agency — ARCHIVE (do not delete).
+  //     Archiving preserves his record and all historical notes for §8.7405
+  //     compliance while removing him from active daily-log flows.
+  //   - If the earlier v2 migration already deleted him from this device,
+  //     restore him from the seed as archived so no data is lost.
+  const migrationKey = 'gm_migration_roster_20260420_v3';
+  if (typeof window !== 'undefined' && !localStorage.getItem(migrationKey)) {
+    const clients = getItem<Client[]>(STORAGE_KEYS.clients) || [];
+    const isJonathanKopec = (name: string) => /jonathan\s*kope?ck?/i.test(name);
+
+    // 1. Rename c21 (Jonas's slot) if it still says Jonathan Kopec.
+    for (const c of clients) {
+      if (c.id === 'c21' && c.providerId === 'p17' && isJonathanKopec(c.name)) {
+        c.name = 'Nathaniel Weldon';
+      }
+    }
+
+    // 2. Archive any remaining Jonathan Kopec records (do NOT delete).
+    for (const c of clients) {
+      if (isJonathanKopec(c.name) && !c.archived) {
+        c.archived = true;
+        c.archivedAt = new Date().toISOString();
+        c.archivedReason = 'Left the agency';
+      }
+    }
+
+    // 3. If the v2 migration already dropped Jonathan from this device,
+    //    restore the canonical c12 record from the seed as archived.
+    if (!clients.some(c => c.id === 'c12')) {
+      const restored = SAMPLE_CLIENTS.find(c => c.id === 'c12');
+      if (restored) {
+        clients.push({ ...restored });
+      }
+    }
+
+    setItem(STORAGE_KEYS.clients, clients);
+    localStorage.setItem(migrationKey, '1');
+  }
+
+  // Data fix (2026-07-09 v4):
+  //   - Grace Lumowa (p16) now has Jacob Koldeway as a client (slot c34).
+  //     The seed above only applies to first-time devices with an empty
+  //     roster, so add him to devices seeded before this change — otherwise
+  //     the assignment never reaches browsers that already have a roster.
+  const migrationKeyV4 = 'gm_migration_roster_20260709_v4';
+  if (typeof window !== 'undefined' && !localStorage.getItem(migrationKeyV4)) {
+    const clients = getItem<Client[]>(STORAGE_KEYS.clients) || [];
+    const hasJacob = clients.some(
+      c => c.id === 'c34' || (/jacob\s+koldeway/i.test(c.name) && c.providerId === 'p16')
+    );
+    if (!hasJacob) {
+      const seeded = SAMPLE_CLIENTS.find(c => c.id === 'c34');
+      if (seeded) {
+        clients.push({ ...seeded });
+        setItem(STORAGE_KEYS.clients, clients);
+      }
+    }
+    localStorage.setItem(migrationKeyV4, '1');
   }
 }
 
@@ -226,17 +290,49 @@ export function removeProvider(id: string): void {
 }
 
 // --- Clients ---
+// Active (non-archived) clients assigned to a provider — used by daily-log
+// flows (dashboard, log view, day statuses) where archived clients must be hidden.
 export function getClientsForProvider(providerId: string): Client[] {
   const clients = getItem<Client[]>(STORAGE_KEYS.clients) || SAMPLE_CLIENTS;
-  return clients.filter(c => c.providerId === providerId);
+  return clients.filter(c => c.providerId === providerId && !c.archived);
 }
 
+// Every client record including archived — used by note history, exports,
+// and anywhere the client name must still resolve from historical data.
 export function getAllClients(): Client[] {
   return getItem<Client[]>(STORAGE_KEYS.clients) || SAMPLE_CLIENTS;
 }
 
+// Active clients across the whole agency (non-archived). Default for admin
+// dashboards, assignment views, and provider-client counts.
+export function getActiveClients(): Client[] {
+  return getAllClients().filter(c => !c.archived);
+}
+
+// Admin-only view of archived clients (for the "Archived Clients" section).
+export function getArchivedClients(): Client[] {
+  return getAllClients().filter(c => c.archived);
+}
+
 export function getUnassignedClients(): Client[] {
-  return getAllClients().filter(c => !c.providerId || c.providerId === '');
+  return getAllClients().filter(c => (!c.providerId || c.providerId === '') && !c.archived);
+}
+
+// Archive/unarchive — preserves the row and all linked notes.
+export function archiveClient(id: string, reason?: string): Client {
+  return updateClient(id, {
+    archived: true,
+    archivedAt: new Date().toISOString(),
+    archivedReason: reason || 'Archived',
+  });
+}
+
+export function unarchiveClient(id: string): Client {
+  return updateClient(id, {
+    archived: false,
+    archivedAt: undefined,
+    archivedReason: undefined,
+  });
 }
 
 export function addClient(client: Omit<Client, 'id'>): Client {
@@ -308,27 +404,33 @@ export function saveDailyNote(note: Omit<DailyNote, 'id' | 'createdAt' | 'update
 }
 
 // --- Day Status (Missed Days) ---
-export function getDayStatuses(providerId: string, startDate: Date, endDate: Date): DayStatus[] {
+export function getDayStatuses(providerId: string, startDateStr: string, endDateStr: string): DayStatus[] {
   const clients = getClientsForProvider(providerId);
   const notes = getNotesForProvider(providerId);
   const statuses: DayStatus[] = [];
+  const today = getMountainToday();
 
-  const current = new Date(startDate);
-  while (current <= endDate) {
-    const dateStr = current.toISOString().split('T')[0];
+  const dates: string[] = getDateRange(startDateStr, endDateStr);
 
+  for (const dateStr of dates) {
     for (const client of clients) {
       const note = notes.find(n => n.clientId === client.id && n.date === dateStr);
+      let status: 'completed' | 'missed' | 'pending';
+      if (note) {
+        status = 'completed';
+      } else if (dateStr > today) {
+        status = 'pending';
+      } else {
+        status = 'missed';
+      }
       statuses.push({
         date: dateStr,
         clientId: client.id,
         clientName: client.name,
-        status: note ? 'completed' : 'missed',
+        status,
         note: note || undefined,
       });
     }
-
-    current.setDate(current.getDate() + 1);
   }
 
   return statuses;
