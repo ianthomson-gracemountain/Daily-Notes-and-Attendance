@@ -5,6 +5,7 @@ import { UserRole, AppSettings } from '@/lib/types';
 import { getSheetUrl, setSheetUrl, clearSheetUrl, syncAllNotesToSheet } from '@/lib/sheets';
 import { getAllNotes, getAppSettings, updateAppSettings } from '@/lib/store';
 import { testApiKey } from '@/lib/ai';
+import { isFrozen } from '@/lib/freeze';
 
 interface SettingsViewProps {
   role: UserRole;
@@ -16,6 +17,7 @@ interface SettingsViewProps {
 export default function SettingsView({ role, showToast, sheetConnected, setSheetConnected }: SettingsViewProps) {
   const [sheetUrl, setSheetUrlState] = useState<string>(getSheetUrl() || '');
   const [syncing, setSyncing] = useState(false);
+  const frozen = isFrozen();
 
   const settings = getAppSettings();
   const [aiApiKey, setAiApiKey] = useState(settings.aiApiKey || '');
@@ -50,6 +52,7 @@ export default function SettingsView({ role, showToast, sheetConnected, setSheet
 
             <button
               onClick={async () => {
+                if (frozen) return;
                 setSyncing(true);
                 const notes = getAllNotes();
                 const phiEnabled = getAppSettings().phiProtectionEnabled;
@@ -61,7 +64,8 @@ export default function SettingsView({ role, showToast, sheetConnected, setSheet
                   showToast(result.error || 'Sync failed');
                 }
               }}
-              disabled={syncing}
+              disabled={frozen || syncing}
+              aria-disabled={frozen || syncing}
               className="w-full bg-gm-green hover:bg-gm-green-light disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition-colors"
             >
               {syncing ? 'Syncing...' : 'Sync All Notes Now'}
