@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Graduate, Josefin_Sans } from "next/font/google";
 import "./globals.css";
+import FreezeBanner from "@/components/layout/FreezeBanner";
 
 const graduate = Graduate({
   weight: "400",
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${graduate.variable} ${josefinSans.variable}`}>
       <body className="antialiased min-h-screen bg-[#f8f7f5]">
+        <FreezeBanner />
         {children}
       </body>
     </html>

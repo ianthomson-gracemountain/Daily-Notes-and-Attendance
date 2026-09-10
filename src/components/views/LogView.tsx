@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Client, DailyNote, Provider, UserRole } from '@/lib/types';
 import { getNoteForClientDate, saveDailyNote, getAppSettings, getAllClients } from '@/lib/store';
 import { syncNoteToSheet } from '@/lib/sheets';
+import { isFrozen } from '@/lib/freeze';
 import { getClientDisplayName } from '@/lib/phi';
 import { enhanceNote } from '@/lib/ai';
 import { getMountainToday } from '@/lib/dates';
@@ -26,6 +27,7 @@ export default function LogView({
   initialClient, initialDate, initialStep,
 }: LogViewProps) {
   const settings = getAppSettings();
+  const frozen = isFrozen();
   const [logStep, setLogStep] = useState<'select' | 'confirm' | 'note' | 'done'>(initialStep || 'select');
   const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient || null);
   const [selectedDate, setSelectedDate] = useState<string>(initialDate || getMountainToday());
@@ -90,6 +92,7 @@ export default function LogView({
   }
 
   async function handleSaveNote() {
+    if (frozen) return;
     if (!selectedClient || servicesProvided === null || !noteText.trim()) return;
 
     const saved = saveDailyNote({
@@ -150,8 +153,10 @@ export default function LogView({
             {clients.map(client => (
               <button
                 key={client.id}
-                onClick={() => { setSelectedClient(client); setExistingNote(null); }}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${selectedClient?.id === client.id ? 'border-gm-gold bg-amber-50' : 'border-gray-200 hover:border-gray-300'}`}
+                onClick={() => { if (frozen) return; setSelectedClient(client); setExistingNote(null); }}
+                disabled={frozen}
+                aria-disabled={frozen}
+                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all disabled:opacity-50 ${selectedClient?.id === client.id ? 'border-gm-gold bg-amber-50' : 'border-gray-200 hover:border-gray-300'}`}
               >
                 <p className="font-medium text-sm">{displayName(client)}</p>
               </button>
@@ -164,12 +169,15 @@ export default function LogView({
             value={selectedDate}
             onChange={e => { setSelectedDate(e.target.value); setExistingNote(null); }}
             max={getMountainToday()}
+            disabled={frozen}
+            aria-disabled={frozen}
             className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gm-gold focus:outline-none transition-colors"
           />
 
           <button
             onClick={handleClientDateSelect}
-            disabled={!selectedClient}
+            disabled={frozen || !selectedClient}
+            aria-disabled={frozen || !selectedClient}
             className="w-full mt-5 bg-gm-green hover:bg-gm-green-light disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition-colors"
           >
             Continue
@@ -200,7 +208,9 @@ export default function LogView({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleServiceAnswer(true)}
-              className="bg-gm-success-light hover:bg-green-100 border-2 border-gm-success text-gm-success font-semibold py-4 rounded-xl transition-all text-lg flex flex-col items-center gap-1"
+              disabled={frozen}
+              aria-disabled={frozen}
+              className="disabled:opacity-50 bg-gm-success-light hover:bg-green-100 border-2 border-gm-success text-gm-success font-semibold py-4 rounded-xl transition-all text-lg flex flex-col items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
                 <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" />
@@ -209,7 +219,9 @@ export default function LogView({
             </button>
             <button
               onClick={() => handleServiceAnswer(false)}
-              className="bg-gm-red-light hover:bg-red-100 border-2 border-gm-red text-gm-red font-semibold py-4 rounded-xl transition-all text-lg flex flex-col items-center gap-1"
+              disabled={frozen}
+              aria-disabled={frozen}
+              className="disabled:opacity-50 bg-gm-red-light hover:bg-red-100 border-2 border-gm-red text-gm-red font-semibold py-4 rounded-xl transition-all text-lg flex flex-col items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
                 <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clipRule="evenodd" />
@@ -245,7 +257,9 @@ export default function LogView({
               : 'e.g., Client was absent due to a medical appointment...'
             }
             rows={4}
-            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gm-gold focus:outline-none transition-colors resize-none"
+            disabled={frozen}
+            aria-disabled={frozen}
+            className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-sm focus:border-gm-gold focus:outline-none transition-colors resize-none disabled:bg-gray-100"
             autoFocus
           />
           <p className="text-xs text-gray-400 mt-1">Required field</p>
@@ -256,7 +270,8 @@ export default function LogView({
               {!wasEnhanced ? (
                 <button
                   onClick={handleEnhance}
-                  disabled={!noteText.trim() || isEnhancing}
+                  disabled={frozen || !noteText.trim() || isEnhancing}
+                  aria-disabled={frozen || !noteText.trim() || isEnhancing}
                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 disabled:from-gray-300 disabled:to-gray-300 text-white font-medium py-2.5 rounded-lg transition-all text-sm"
                 >
                   {isEnhancing ? (
@@ -308,7 +323,8 @@ export default function LogView({
 
           <button
             onClick={handleSaveNote}
-            disabled={!noteText.trim()}
+            disabled={frozen || !noteText.trim()}
+            aria-disabled={frozen || !noteText.trim()}
             className="w-full mt-4 bg-gm-green hover:bg-gm-green-light disabled:bg-gray-300 text-white font-semibold py-3 rounded-xl transition-colors"
           >
             Save Daily Note

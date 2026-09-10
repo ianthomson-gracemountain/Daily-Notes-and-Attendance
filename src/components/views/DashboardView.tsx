@@ -6,6 +6,7 @@ import { getClientsForProvider, getDayStatuses, getNoteForClientDate, getAllClie
 import { getClientDisplayName, getInitials } from '@/lib/phi';
 import { getAppSettings } from '@/lib/store';
 import { getMountainWeekRange, getMountainToday } from '@/lib/dates';
+import { isFrozen } from '@/lib/freeze';
 
 interface DashboardViewProps {
   provider: Provider;
@@ -40,6 +41,7 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
   const [dayStatuses, setDayStatuses] = useState<DayStatus[]>([]);
   const [stats, setStats] = useState({ total: 0, completed: 0, missed: 0 });
   const settings = getAppSettings();
+  const frozen = isFrozen();
 
   const refreshDashboard = useCallback(() => {
     const { start, end } = getMountainWeekRange();
@@ -78,8 +80,10 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
         <h2 className="text-gm-cream text-xl mb-2" style={{ fontFamily: 'var(--font-graduate), Graduate, cursive' }}>Daily Notes</h2>
         <p className="text-gm-cream/70 text-sm mb-4">Log attendance and notes for your clients</p>
         <button
-          onClick={() => onStartLog()}
-          className="bg-gm-gold hover:bg-gm-gold-light text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-md text-lg"
+          onClick={() => { if (frozen) return; onStartLog(); }}
+          disabled={frozen}
+          aria-disabled={frozen}
+          className="bg-gm-gold hover:bg-gm-gold-light disabled:bg-gray-300 disabled:hover:bg-gray-300 text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-md text-lg"
         >
           + Log Daily Note
         </button>
@@ -128,8 +132,10 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
               return (
                 <div
                   key={`${status.date}-${status.clientId}`}
-                  className={`px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors ${status.status === 'missed' ? 'cursor-pointer' : ''}`}
+                  className={`px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors ${status.status === 'missed' && !frozen ? 'cursor-pointer' : ''}`}
+                  aria-disabled={frozen}
                   onClick={() => {
+                    if (frozen) return;
                     if (status.status === 'missed' && client) {
                       onStartLog(client, status.date);
                     }
@@ -151,7 +157,7 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
                       </span>
                     ) : status.status === 'missed' ? (
                       <span className="text-xs bg-gm-red-light text-gm-red font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
-                        Tap to log
+                        {frozen ? 'Not logged' : 'Tap to log'}
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
                           <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" />
                         </svg>
@@ -197,8 +203,10 @@ export default function DashboardView({ provider, role, clients, onStartLog }: D
                   </span>
                 ) : (
                   <button
-                    onClick={() => onStartLog(client)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gm-coral text-white hover:bg-gm-coral-light transition-colors"
+                    onClick={() => { if (frozen) return; onStartLog(client); }}
+                    disabled={frozen}
+                    aria-disabled={frozen}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gm-coral text-white hover:bg-gm-coral-light disabled:bg-gray-300 disabled:hover:bg-gray-300 transition-colors"
                   >
                     Log Now
                   </button>

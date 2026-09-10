@@ -1,6 +1,7 @@
 'use client';
 
 import { AppView, UserRole } from '@/lib/types';
+import { isFrozen } from '@/lib/freeze';
 
 interface NavigationProps {
   view: AppView;
@@ -16,6 +17,8 @@ interface TabItem {
 }
 
 export default function Navigation({ view, setView, role, onStartLog }: NavigationProps) {
+  const frozen = isFrozen();
+
   const providerTabs: TabItem[] = [
     { label: 'Dashboard', view: 'dashboard' },
     { label: 'Daily Notes', view: 'log', action: onStartLog },
@@ -43,12 +46,15 @@ export default function Navigation({ view, setView, role, onStartLog }: Navigati
             key={tab.view}
             onClick={() => {
               if ('action' in tab && tab.action) {
+                if (frozen) return;
                 tab.action();
               } else {
                 setView(tab.view);
               }
             }}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${
+            disabled={frozen && 'action' in tab && !!tab.action}
+            aria-disabled={frozen && 'action' in tab && !!tab.action}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap disabled:text-gm-cream/30 disabled:hover:text-gm-cream/30 ${
               view === tab.view
                 ? 'text-gm-gold border-b-2 border-gm-gold'
                 : 'text-gm-cream/70 hover:text-gm-cream'
