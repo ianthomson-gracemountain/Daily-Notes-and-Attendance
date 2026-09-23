@@ -1,3 +1,5 @@
+> **RETIRED 2026-09-23.** The live site serves only `moved/` (a static "We've Moved" page linking to Summit). Redeploy it with `npx netlify-cli deploy --prod --no-build --dir=moved`. Never deploy `out/`: that would bring back the old app, including its PIN-protected admin dashboard. The Google Apps Script sheet endpoint is separate and still exists.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
